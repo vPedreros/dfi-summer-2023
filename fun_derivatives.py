@@ -174,3 +174,4 @@ def d_wa_lnE(z, Oml=results.get_Omega('de'), w_0=pars.DarkEnergy.w, w_a=pars.Dar
     term2 = np.exp(-3 * w_a * z / (1 + z)) * epsilon(z)
     term3 = 2 * E(z) ** 2
     return term1 * term2 / term3
+        

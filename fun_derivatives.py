@@ -146,17 +146,31 @@ def error_convergence(i, j, l, fsky=1.0, dl=10):
 """Defining derivatives for Fisher matrix"""
 
 
-def domm_E(z):
+def d_omm_lnE(z):
     num = (1 + z) ** 3 - (1 + z) ** 2
     den = 2 * E(z) ** 2
     return num / den
 
 
-def domde_E(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+def d_omde_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
     num = (1+z)**(3*(1 + w_0 + w_a)) * np.exp(-3 * w_0 * z / (1+z)) - (1 + z) ** 2
     den = 2 * E(z) ** 2
     return num / den
 
 
-def domw0_E():
-    pass
+def d_w0_lnE(z, Oml=results.get_Omega('de'), w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
+    term2 = np.exp(-3 * w_a * z / (1 + z)) * np.log(1 + z)
+    term3 = 2 * E(z) ** 2
+    return term1 * term2 / term3
+
+
+def epsilon(z):
+    return np.log(1 + z) - z / (1 + z)
+
+
+def d_wa_lnE(z, Oml=results.get_Omega('de'), w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
+    term2 = np.exp(-3 * w_a * z / (1 + z)) * epsilon(z)
+    term3 = 2 * E(z) ** 2
+    return term1 * term2 / term3

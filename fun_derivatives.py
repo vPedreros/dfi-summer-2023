@@ -22,7 +22,7 @@ l_speed = const.c.value / 1000
 """Fiducial parameters"""
 
 
-dict_fiducial = {'Omegam': 0.32, 'Omegab': 0.05, 'Omegade': 0.68,
+dict_fiducial = {'Omegam': 0.32, 'Omegab': 0.05, 'Omegade': 0.68, 'Omegach2': 0.12055785610846023,
                  'w0': -1.0, 'wa': 0, 'hubble': 0.67, 'ns': 0.96, 'sigma8': 0.815584, 'gamma': 0.55}
 
 pars = model.CAMBparams()  # Set of parameters created
@@ -243,15 +243,21 @@ def d_K(i, j, z, param, Omm=omm):
         return 2 / Omm + term
     elif param == 'h':
         return 3 / pars.h
-    else:
+    elif param == 'w0':
         return term
-
+    elif param == 'wa':
+        return term
+    else:
+        return 0
 
 """Power Spectrum"""
 
 
 def d_param_kl(z, l, param):
-    return -(l + 1/2) / (r(z) ** 3) * d_lnr(z, param)
+    if param in ['Omegam', 'h', 'wo', 'wa']:
+        return -(l + 1/2) / (r(z) ** 3) * d_lnr(z, param)
+    else: 
+        return 0
 
 
 def d_k_mps(z, l, dk=0.01):
@@ -267,9 +273,9 @@ def d_param_mps(param, l=200, z=1,  fiducial=dict_fiducial):
     mps_evaluated = np.zeros(200)
     for idx, val in enumerate(np.linspace(param_l, param_u, 200)):
         pars = camb.CAMBparams()
-        pars.set_cosmology(H0=fiducial['hubble']*100, ombh2=Omegab*hubble**2, tau=0.058)
+        pars.set_cosmology(H0=fiducial['hubble']*100, ombh2=Omegab*hubble**2, omch2=Omegach2, tau=0.058)
         pars.InitPower.set_params(ns=ns)
-        pars.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50)
+        pars.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=7)
 
         pars.NonLinear = model.NonLinear_none
         results = camb.get_results(pars)

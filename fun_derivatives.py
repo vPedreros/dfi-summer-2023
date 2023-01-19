@@ -40,14 +40,21 @@ def E(z, Omm=omm, Omde=omde, OmK=omk, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy
 
 def r(z):
     """Comoving Distance as a function of the redshift
-    Quad integration from scipy is used.
+    trapz from numpy is used.
     ===================================================
     Input: redshift z
     Output: comoving distance r
     """
     def integrand(u):
         return 1/E(u)
-    integral = integrate.quad(integrand, 0, z)[0]
+    if type(z) == np.ndarray:
+        integral = np.zeros(200)
+        for idx, redshift in enumerate(z):
+            z_int = np.linspace(0, redshift, 200)
+            integral[idx] = np.trapz(integrand(z_int), z_int)
+    else:
+        z_int = np.linspace(0, z, 200)
+        integral = np.trapz(integrand(z_int), z_int)
     return l_speed / pars.H0 * integral
 
 
@@ -88,7 +95,7 @@ for i in range(10):
 
 def window(i, z, zmax=2.5):
     """Reduced window function as a function of redshift.
-    Quad integration from scipy is used.
+    trapz from numpy is used for integration.
     ===================================================
     Inputs: bin number i, redshift z, min/max redshift 
     zmin/zmax (optional, default=0.001/2.5)
@@ -97,7 +104,10 @@ def window(i, z, zmax=2.5):
     def integrand(w):
         return dict_ndsty['bin_ndensity_%s' % (str(i))](w) * (1 - r(z) / r(w))
 
-    return integrate.quad(integrand, z, zmax, limit=100)[0]
+    z_int = np.linspace(z, zmax, 200)
+    integral = np.trapz(integrand(z_int), z_int)
+
+    return integral
 
 
 def weight_gamma(i, z, Omm=omm):
@@ -137,13 +147,17 @@ def convergence_gammagamma(i, j, l, zmin=0.001, zmax=2.5):
     return l_speed / pars.H0 * integral
 
 
-def error_convergence(i, j, l, fsky=1.0, dl=10):
+def error_convergence(i, j, l, fsky=(1/15000), dl=10):
     term1 = np.sqrt(2 / ((2 * l + 1) * dl * fsky))
     term2 = convergence_gammagamma(i, j, l)
     return term1 * term2
 
 
 """Defining derivatives for Fisher matrix"""
+
+
+def epsilon(z):
+    return np.log(1 + z) - z / (1 + z)
 
 
 def d_omm_lnE(z):
@@ -153,25 +167,140 @@ def d_omm_lnE(z):
 
 
 def d_omde_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    num = (1+z)**(3*(1 + w_0 + w_a)) * np.exp(-3 * w_0 * z / (1+z)) - (1 + z) ** 2
+    num = (1+z)**(3*(1 + w_0 + w_a)) * \
+        np.exp(-3 * w_0 * z / (1+z)) - (1 + z) ** 2
     den = 2 * E(z) ** 2
     return num / den
 
 
-def d_w0_lnE(z, Oml=results.get_Omega('de'), w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+def d_w0_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    Oml = omde + omk
     term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
     term2 = np.exp(-3 * w_a * z / (1 + z)) * np.log(1 + z)
     term3 = 2 * E(z) ** 2
     return term1 * term2 / term3
 
 
-def epsilon(z):
-    return np.log(1 + z) - z / (1 + z)
-
-
-def d_wa_lnE(z, Oml=results.get_Omega('de'), w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+def d_wa_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    Oml = omde + omk
     term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
     term2 = np.exp(-3 * w_a * z / (1 + z)) * epsilon(z)
     term3 = 2 * E(z) ** 2
     return term1 * term2 / term3
-        
+
+
+def d_omm_lnr(z, zmin=0.001):
+    r_tilde = pars.H0 / l_speed * r(z)
+
+    def integrand(u):
+        num = (1 + u) ** 3 - (1 + u) ** 2
+        den = E(u) ** 3
+        return num / den
+    z_int = np.linspace(zmin, z, 200)
+    integral = np.trapz(integrand(z_int), z_int)
+    return -integral / (2 * r_tilde)
+
+
+def d_omde_lnr(z, zmin=0.001, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    r_tilde = pars.H0 / l_speed * r(z)
+
+    def integrand(u):
+        num = (1+u)**(3*(1 + w_0 + w_a)) * \
+            np.exp(-3 * w_a * u / (1+u)) - (1 + u) ** 2
+        den = E(u) ** 2
+        return num / den
+    z_int = np.linspace(zmin, z, 200)
+    integral = np.trapz(integrand(z_int), z_int)
+    return -3 * integral / (2 * r_tilde)
+
+
+def d_w0_lnr(z, zmin=0.001, Omde=omde, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    r_tilde = pars.H0 / l_speed * r(z)
+
+    def integrand(u):
+        num = Omde * (1+u)**(3*(1 + w_0 + w_a)) * \
+            np.exp(-3 * w_a * u / (1+u)) * np.log(1 + u)
+        den = E(z) ** 3
+        return num / den
+    z_int = np.linspace(zmin, z, 200)
+    integral = np.trapz(integrand(z_int), z_int) 
+    return -3 * integral / (2 * r_tilde)
+
+
+def d_wa_lnr(z, zmin=0.001, Omde=omde, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    r_tilde = pars.H0 / l_speed * r(z)
+
+    def integrand(u):
+        num = Omde * (1+u)**(3*(1 + w_0 + w_a)) * \
+            np.exp(-3 * w_a * u / (1+u)) * epsilon(z)
+        den = E(z) ** 3
+        return num / den
+    z_int = np.linspace(zmin, z, 200)
+    integral = np.trapz(integrand(z_int), z_int)
+    return -3 * integral / (2 * r_tilde)
+
+
+d_h_lnr = -1 / pars.h
+
+
+def d_omm_window(i, z, zmax=2.5):
+    def integrand(u):
+        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
+        term2 = d_omm_lnr(u) - d_omm_lnr(z)
+        return term1 * term2
+    z_int = np.linspace(z, zmax, 200)
+    num = np.trapz(integrand(z_int), z_int)
+    den = window(i, z)
+    return num / den
+
+
+def d_omde_window(i, z, zmax=2.5):
+    def integrand(u):
+        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
+        term2 = d_omde_lnr(u) - d_omde_lnr(z)
+        return term1 * term2
+    z_int = np.linspace(z, zmax, 200)
+    num = np.trapz(integrand(z_int), z_int)
+    den = window(i, z)
+    return num / den
+
+
+def d_w0_window(i, z, zmax=2.5):
+    def integrand(u):
+        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
+        term2 = d_w0_lnr(u) - d_w0_lnr(z)
+        return term1 * term2
+    z_int = np.linspace(z, zmax, 200)
+    num = np.trapz(integrand(z_int), z_int)
+    den = window(i, z)
+    return num / den
+
+
+def d_wa_window(i, z, zmax=2.5):
+    def integrand(u):
+        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
+        term2 = d_wa_lnr(u) - d_wa_lnr(z)
+        return term1 * term2
+    z_int = np.linspace(z, zmax, 200)
+    num = np.trapz(integrand(z_int), z_int)
+    den = window(i, z)
+    return num / den
+
+
+def d_omm_k(i, j, z, Omm=omm):
+    return 2 / Omm - d_omm_lnE(z) + d_omm_window(i, z) + d_omm_window(j, z)
+
+
+def d_omde_k(i, j, z):
+    return -d_omde_lnE(z) + d_omde_window(i, z) + d_omde_window(j, z)
+
+
+def d_w0_k(i, j, z):
+    return -d_w0_lnE(z) + d_w0_window(i, z) + d_w0_window(j, z)
+
+
+def d_wa_k(i, j, z):
+    return -d_wa_lnE(z) + d_wa_window(i, z) + d_wa_window(j, z)
+
+
+d_h_k = 3 / pars.h

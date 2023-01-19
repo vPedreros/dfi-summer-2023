@@ -18,6 +18,13 @@ print('Using CAMB %s installed at %s' %
 
 l_speed = const.c.value / 1000
 
+
+"""Fiducial parameters"""
+
+
+dict_fiducial = {'Omegam': 0.32, 'Omegab': 0.05, 'Omegade': 0.68,
+                 'w0': -1.0, 'wa': 0, 'hubble': 0.67, 'ns': 0.96, 'sigma8': 0.815584, 'gamma': 0.55}
+
 pars = model.CAMBparams()  # Set of parameters created
 pars.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
 pars.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
@@ -26,6 +33,7 @@ results = camb.get_results(pars)
 omde = results.get_Omega('de')
 omk = pars.omk
 omm = 1 - omde - omk
+
 
 """General functions defined"""
 
@@ -162,10 +170,10 @@ def epsilon(z):
 
 def d_lnE(z, param, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
     den = 2 * E(z) ** 2
-    if param == 'Omm':
+    if param == 'Omegam':
         return ((1 + z) ** 3 - (1 + z) ** 2) / den
     term1 = (1 + z) ** (3*(1 + w_0 + w_a)) * np.exp(-3 * w_0 * z / (1+z))
-    if param == 'OmDE':
+    if param == 'Omegade':
         return (term1 - (1 + z) ** 2) / den
     elif param == 'w0':
         Oml = omde + omk
@@ -174,12 +182,12 @@ def d_lnE(z, param, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
         Oml = omde + omk
         return (3 * Oml * term1 * epsilon(z)) / den
     else:
-        print("Please give a correct parameter, such as 'Omm', 'OmDE', 'w0', 'wa'...")
+        print("Please give a correct parameter, such as 'Omegam', 'Omegade', 'w0', 'wa'...")
 
 
 def d_lnr(z, param, zmin=0.001, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
     den1 = - (pars.H0 * r(z)) / (2 * l_speed)
-    if param == 'Omm':
+    if param == 'Omegam':
         def integrand(u):
             num = (1 + u) ** 3 - (1 + u) ** 2
             den = E(u) ** 3
@@ -187,7 +195,7 @@ def d_lnr(z, param, zmin=0.001, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
         z_int = np.linspace(zmin, z, 200)
         integral = np.trapz(integrand(z_int), z_int)
         return integral / den1
-    elif param == 'OmDE':
+    elif param == 'Omegade':
         def integrand(u):
             num = (1+u)**(3*(1 + w_0 + w_a)) * \
                 np.exp(-3 * w_a * u / (1+u)) - (1 + u) ** 2
@@ -229,27 +237,44 @@ def d_window(i, z, param, zmax=2.5):
     return num / den
 
 
-def d_K(i, j, z, Omm=omm):
-    return 2 / Omm - d_omm_lnE(z) + d_omm_window(i, z) + d_omm_window(j, z)
-
-
-def d_omde_K(i, j, z):
-    return -d_omde_lnE(z) + d_omde_window(i, z) + d_omde_window(j, z)
-
-
-def d_w0_K(i, j, z):
-    return -d_w0_lnE(z) + d_w0_window(i, z) + d_w0_window(j, z)
-
-
-def d_wa_K(i, j, z):
-    return -d_wa_lnE(z) + d_wa_window(i, z) + d_wa_window(j, z)
-
-
-d_h_k = 3 / pars.h
+def d_K(i, j, z, param, Omm=omm):
+    term = - d_lnE(z, param) + d_window(i, z, param) + d_window(j, z, param)
+    if param == 'Omegam':
+        return 2 / Omm + term
+    elif param == 'h':
+        return 3 / pars.h
+    else:
+        return term
 
 
 """Power Spectrum"""
 
 
-def d_omm_kl(l, z):
-    return -(l + 1/2) / (r(z) ** 3) * d_omm_lnr(z)
+def d_param_kl(z, l, param):
+    return -(l + 1/2) / (r(z) ** 3) * d_lnr(z, param)
+
+
+def d_k_mps(z, l, dk=0.01):
+    k = (l + 1/2) / r(z)
+    return (mps_linear(z, k+dk) - mps_linear(z, k)) / dk
+
+
+def d_param_mps(param, l=200, z=1,  fiducial=dict_fiducial):
+    locals().update(fiducial)
+    k = (l + 1/2) / r(z)
+    param_u = 1 + fiducial[param] / 10
+    param_l = 1 - fiducial[param] / 10
+    mps_evaluated = np.zeros(200)
+    for idx, val in enumerate(np.linspace(param_l, param_u, 200)):
+        pars = camb.CAMBparams()
+        pars.set_cosmology(H0=fiducial['hubble']*100, ombh2=Omegab*hubble**2, tau=0.058)
+        pars.InitPower.set_params(ns=ns)
+        pars.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50)
+
+        pars.NonLinear = model.NonLinear_none
+        results = camb.get_results(pars)
+        kh, z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=7, npoints = 200)
+        mps_linear = interpolate.RectBivariateSpline(z, kh, pk)
+        mps_evaluated[idx] = mps_linear(z, k)
+
+

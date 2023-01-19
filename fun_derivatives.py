@@ -160,93 +160,68 @@ def epsilon(z):
     return np.log(1 + z) - z / (1 + z)
 
 
-def d_omm_lnE(z):
-    num = (1 + z) ** 3 - (1 + z) ** 2
+def d_lnE(z, param, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
     den = 2 * E(z) ** 2
-    return num / den
+    if param == 'Omm':
+        return ((1 + z) ** 3 - (1 + z) ** 2) / den
+    term1 = (1 + z) ** (3*(1 + w_0 + w_a)) * np.exp(-3 * w_0 * z / (1+z))
+    if param == 'OmDE':
+        return (term1 - (1 + z) ** 2) / den
+    elif param == 'w0':
+        Oml = omde + omk
+        return (3 * Oml * term1 * np.log(1 + z)) / den
+    elif param == 'wa':
+        Oml = omde + omk
+        return (3 * Oml * term1 * epsilon(z)) / den
+    else:
+        print("Please give a correct parameter, such as 'Omm', 'OmDE', 'w0', 'wa'...")
 
 
-def d_omde_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    num = (1+z)**(3*(1 + w_0 + w_a)) * \
-        np.exp(-3 * w_0 * z / (1+z)) - (1 + z) ** 2
-    den = 2 * E(z) ** 2
-    return num / den
+def d_lnr(z, param, zmin=0.001, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
+    den1 = - (pars.H0 * r(z)) / (2 * l_speed)
+    if param == 'Omm':
+        def integrand(u):
+            num = (1 + u) ** 3 - (1 + u) ** 2
+            den = E(u) ** 3
+            return num / den
+        z_int = np.linspace(zmin, z, 200)
+        integral = np.trapz(integrand(z_int), z_int)
+        return integral / den1
+    elif param == 'OmDE':
+        def integrand(u):
+            num = (1+u)**(3*(1 + w_0 + w_a)) * \
+                np.exp(-3 * w_a * u / (1+u)) - (1 + u) ** 2
+            den = E(u) ** 2
+            return num / den
+        z_int = np.linspace(zmin, z, 200)
+        integral = np.trapz(integrand(z_int), z_int)
+        return -3 * integral / den1
+    elif param == 'w0':
+        def integrand(u):
+            num = omde * (1+u)**(3*(1 + w_0 + w_a)) * \
+                np.exp(-3 * w_a * u / (1+u)) * np.log(1 + u)
+            den = E(z) ** 3
+            return num / den
+        z_int = np.linspace(zmin, z, 200)
+        integral = np.trapz(integrand(z_int), z_int)
+        return -3 * integral / den1
+    elif param == 'wa':
+        def integrand(u):
+            num = omde * (1+u)**(3*(1 + w_0 + w_a)) * \
+                np.exp(-3 * w_a * u / (1+u)) * epsilon(z)
+            den = E(z) ** 3
+            return num / den
+        z_int = np.linspace(zmin, z, 200)
+        integral = np.trapz(integrand(z_int), z_int)
+        return -3 * integral / den1
+    elif param == 'h':
+        return -1 / pars.h
 
 
-def d_w0_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    Oml = omde + omk
-    term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
-    term2 = np.exp(-3 * w_a * z / (1 + z)) * np.log(1 + z)
-    term3 = 2 * E(z) ** 2
-    return term1 * term2 / term3
-
-
-def d_wa_lnE(z, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    Oml = omde + omk
-    term1 = 3 * Oml * (1 + z) ** (3*(1 + w_0 + w_a))
-    term2 = np.exp(-3 * w_a * z / (1 + z)) * epsilon(z)
-    term3 = 2 * E(z) ** 2
-    return term1 * term2 / term3
-
-
-def d_omm_lnr(z, zmin=0.001):
-    r_tilde = pars.H0 / l_speed * r(z)
-
-    def integrand(u):
-        num = (1 + u) ** 3 - (1 + u) ** 2
-        den = E(u) ** 3
-        return num / den
-    z_int = np.linspace(zmin, z, 200)
-    integral = np.trapz(integrand(z_int), z_int)
-    return -integral / (2 * r_tilde)
-
-
-def d_omde_lnr(z, zmin=0.001, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    r_tilde = pars.H0 / l_speed * r(z)
-
-    def integrand(u):
-        num = (1+u)**(3*(1 + w_0 + w_a)) * \
-            np.exp(-3 * w_a * u / (1+u)) - (1 + u) ** 2
-        den = E(u) ** 2
-        return num / den
-    z_int = np.linspace(zmin, z, 200)
-    integral = np.trapz(integrand(z_int), z_int)
-    return -3 * integral / (2 * r_tilde)
-
-
-def d_w0_lnr(z, zmin=0.001, Omde=omde, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    r_tilde = pars.H0 / l_speed * r(z)
-
-    def integrand(u):
-        num = Omde * (1+u)**(3*(1 + w_0 + w_a)) * \
-            np.exp(-3 * w_a * u / (1+u)) * np.log(1 + u)
-        den = E(z) ** 3
-        return num / den
-    z_int = np.linspace(zmin, z, 200)
-    integral = np.trapz(integrand(z_int), z_int) 
-    return -3 * integral / (2 * r_tilde)
-
-
-def d_wa_lnr(z, zmin=0.001, Omde=omde, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    r_tilde = pars.H0 / l_speed * r(z)
-
-    def integrand(u):
-        num = Omde * (1+u)**(3*(1 + w_0 + w_a)) * \
-            np.exp(-3 * w_a * u / (1+u)) * epsilon(z)
-        den = E(z) ** 3
-        return num / den
-    z_int = np.linspace(zmin, z, 200)
-    integral = np.trapz(integrand(z_int), z_int)
-    return -3 * integral / (2 * r_tilde)
-
-
-d_h_lnr = -1 / pars.h
-
-
-def d_omm_window(i, z, zmax=2.5):
+def d_window(i, z, param, zmax=2.5):
     def integrand(u):
         term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
-        term2 = d_omm_lnr(u) - d_omm_lnr(z)
+        term2 = d_lnr(u, param) - d_lnr(z, param)
         return term1 * term2
     z_int = np.linspace(z, zmax, 200)
     num = np.trapz(integrand(z_int), z_int)
@@ -254,53 +229,27 @@ def d_omm_window(i, z, zmax=2.5):
     return num / den
 
 
-def d_omde_window(i, z, zmax=2.5):
-    def integrand(u):
-        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
-        term2 = d_omde_lnr(u) - d_omde_lnr(z)
-        return term1 * term2
-    z_int = np.linspace(z, zmax, 200)
-    num = np.trapz(integrand(z_int), z_int)
-    den = window(i, z)
-    return num / den
-
-
-def d_w0_window(i, z, zmax=2.5):
-    def integrand(u):
-        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
-        term2 = d_w0_lnr(u) - d_w0_lnr(z)
-        return term1 * term2
-    z_int = np.linspace(z, zmax, 200)
-    num = np.trapz(integrand(z_int), z_int)
-    den = window(i, z)
-    return num / den
-
-
-def d_wa_window(i, z, zmax=2.5):
-    def integrand(u):
-        term1 = dict_ndsty['bin_ndensity_%s' % (str(i))](u) * r(z) / r(u)
-        term2 = d_wa_lnr(u) - d_wa_lnr(z)
-        return term1 * term2
-    z_int = np.linspace(z, zmax, 200)
-    num = np.trapz(integrand(z_int), z_int)
-    den = window(i, z)
-    return num / den
-
-
-def d_omm_k(i, j, z, Omm=omm):
+def d_K(i, j, z, Omm=omm):
     return 2 / Omm - d_omm_lnE(z) + d_omm_window(i, z) + d_omm_window(j, z)
 
 
-def d_omde_k(i, j, z):
+def d_omde_K(i, j, z):
     return -d_omde_lnE(z) + d_omde_window(i, z) + d_omde_window(j, z)
 
 
-def d_w0_k(i, j, z):
+def d_w0_K(i, j, z):
     return -d_w0_lnE(z) + d_w0_window(i, z) + d_w0_window(j, z)
 
 
-def d_wa_k(i, j, z):
+def d_wa_K(i, j, z):
     return -d_wa_lnE(z) + d_wa_window(i, z) + d_wa_window(j, z)
 
 
 d_h_k = 3 / pars.h
+
+
+"""Power Spectrum"""
+
+
+def d_omm_kl(l, z):
+    return -(l + 1/2) / (r(z) ** 3) * d_omm_lnr(z)

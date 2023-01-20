@@ -117,10 +117,19 @@ def convergence(i, j, l, fiducial=dict_fiducial, zmin=0.001, zmax=2.5):
     return l_speed / H0 * integral
 
 
-def error_convergence(i, j, l, fsky=1.0, dl=10):
+def error_convergence(i, j, l, fsky=(1/15000), dl=10):
     term1 = np.sqrt(2 / ((2 * l + 1) * dl * fsky))
     term2 = convergence(i, j, l) 
     return term1 * term2
+
+
+def covariance(i, j, m, n, l1, l2, fsky=(1/15000), dl=10):
+    if l1 != l2:
+        value = 0
+    else:
+        num1 = cosmic_shear_array[l1, i, m] * cosmic_shear_array[l2, j, n]
+        num2 = cosmic_shear_array[l1, i, n] * cosmic_shear_array[l2, j, m]
+        value = (num1 + num2) / ((2*l1 + 1) * fsky * dl)
 
 
 def d_convergence(i, j, l, param, dx=0.01, fiducial=dict_fiducial):
@@ -131,3 +140,4 @@ def d_convergence(i, j, l, param, dx=0.01, fiducial=dict_fiducial):
     fiducial_l = fiducial_l[param_l]
     fiducial_u = fiducial_u[param_u]
     return (convergence(i, j, l, fiducial=fiducial_u) - convergence(i, j, l, fiducial=fiducial_l)) / (2 * dx)
+

@@ -38,15 +38,16 @@ omm = 1 - omde - omk
 """General functions defined"""
 
 
-def E(z, Omm=omm, Omde=omde, OmK=omk, w_0=pars.DarkEnergy.w, w_a=pars.DarkEnergy.wa):
-    mat = Omm * (1 + z) ** 3
-    de = Omde * (1 + z) ** (3 * (1 + w_0 + w_a)) * \
-        np.exp(-3 * w_a * z / (1 + z))
-    cur = OmK * (1 + z) ** 2
+def E(z, fiducial=dict_fiducial):
+    locals().update(fiducial)
+    mat = Omegam * (1 + z) ** 3
+    de = Omegade * (1 + z) ** (3 * (1 + w0 + wa)) * \
+        np.exp(-3 * wa * z / (1 + z))
+    cur = (1 - Omegam - Omegade) * (1 + z) ** 2
     return np.sqrt(mat + de + cur)
 
 
-def r(z):
+def r(z, fiducial=dict_fiducial):
     """Comoving Distance as a function of the redshift
     trapz from numpy is used.
     ===================================================
@@ -54,7 +55,7 @@ def r(z):
     Output: comoving distance r
     """
     def integrand(u):
-        return 1/E(u)
+        return 1/E(u, fiducial)
     if type(z) == np.ndarray:
         integral = np.zeros(200)
         for idx, redshift in enumerate(z):
@@ -66,7 +67,7 @@ def r(z):
     return l_speed / pars.H0 * integral
 
 
-def D_A(z, Omk=omk):
+def D_A(z, fiducial=dict_fiducial):
     """Angular diameter distance as a function of the redshift.
     Note that there are different definitions for different
     space-time curvatures.
@@ -74,6 +75,7 @@ def D_A(z, Omk=omk):
     Inputs: redshift z; curvature density Omk, default given by camb (optional)
     Outputs: angular diameter distance D_A
     """
+    Omk = 1 - fiducial['Omegam'] - fiducial['Omegade']
     if Omk == 0:
         return r(z) / (1 + z)
 
@@ -101,7 +103,7 @@ for i in range(10):
         dict_ndsty['ndensity_file%s' % (str(i))][:, 0], dict_ndsty['ndensity_file%s' % (str(i))][:, 1])
 
 
-def window(i, z, zmax=2.5):
+def window(i, z, zmax=2.5, fiducial=dict_fiducial):
     """Reduced window function as a function of redshift.
     trapz from numpy is used for integration.
     ===================================================
@@ -110,7 +112,7 @@ def window(i, z, zmax=2.5):
     Output: window function evaluated at z, of the ith bin.
     """
     def integrand(w):
-        return dict_ndsty['bin_ndensity_%s' % (str(i))](w) * (1 - r(z) / r(w))
+        return dict_ndsty['bin_ndensity_%s' % (str(i))](w) * (1 - r(z, fiducial) / r(w, fiducial))
 
     z_int = np.linspace(z, zmax, 200)
     integral = np.trapz(integrand(z_int), z_int)
@@ -118,7 +120,7 @@ def window(i, z, zmax=2.5):
     return integral
 
 
-def weight_gamma(i, z, Omm=omm):
+def weight_gamma(i, z, fiducial=dict_fiducial):
     """Weight function of the ith bin, as a function of
     redshift.
     ===================================================
@@ -126,8 +128,9 @@ def weight_gamma(i, z, Omm=omm):
     Omega_m (optional, default provided by CAMB)
     Output: weight function evaluated at z, of the ith bin
     """
-    constant = 3 / 2 * (pars.H0 / l_speed) ** 2 * Omm
-    z_dep = (1 + z) * r(z) * window(i, z)
+
+    constant = 3 / 2 * (pars.H0 / l_speed) ** 2 * fiducial['Omegam']
+    z_dep = (1 + z) * r(z, fiducial) * window(i, z, fiducial=fiducial)
     return constant * z_dep
 
 
@@ -145,9 +148,10 @@ mps_nonlinear = interpolate.RectBivariateSpline(
     dict_mps['z_nonlin'], dict_mps['kh_nonlin'], dict_mps['pk_nonlin'])
 
 
-def convergence_gammagamma(i, j, l, zmin=0.001, zmax=2.5):
+def convergence_gammagamma(i, j, l, fiducial=dict_fiducial, zmin=0.001, zmax=2.5):
     def integrand(z):
-        term1 = weight_gamma(i, z) * weight_gamma(j, z) / (E(z) * r(z) ** 2)
+        term1 = weight_gamma(i, z, fiducial) * weight_gamma(j,
+                                                            z, fiducial) / (E(z, fiducial) * r(z, fiducial) ** 2)
         k = (l + 1/2) / r(z)
         term2 = mps_linear(z, k)[0]
         return term1 * term2
@@ -155,9 +159,9 @@ def convergence_gammagamma(i, j, l, zmin=0.001, zmax=2.5):
     return l_speed / pars.H0 * integral
 
 
-def error_convergence(i, j, l, fsky=(1/15000), dl=10):
+def error_convergence(i, j, l, fsky=(1/15000), dl=10, fiducial=dict_fiducial):
     term1 = np.sqrt(2 / ((2 * l + 1) * dl * fsky))
-    term2 = convergence_gammagamma(i, j, l)
+    term2 = convergence_gammagamma(i, j, l, fiducial)
     return term1 * term2
 
 
@@ -250,13 +254,14 @@ def d_K(i, j, z, param, Omm=omm):
     else:
         return 0
 
+
 """Power Spectrum"""
 
 
 def d_param_kl(z, l, param):
     if param in ['Omegam', 'h', 'wo', 'wa']:
         return -(l + 1/2) / (r(z) ** 3) * d_lnr(z, param)
-    else: 
+    else:
         return 0
 
 
@@ -273,14 +278,14 @@ def d_param_mps(param, l=200, z=1,  fiducial=dict_fiducial):
     mps_evaluated = np.zeros(200)
     for idx, val in enumerate(np.linspace(param_l, param_u, 200)):
         pars = camb.CAMBparams()
-        pars.set_cosmology(H0=fiducial['hubble']*100, ombh2=Omegab*hubble**2, omch2=Omegach2, tau=0.058)
+        pars.set_cosmology(
+            H0=fiducial['hubble']*100, ombh2=Omegab*hubble**2, omch2=Omegach2, tau=0.058)
         pars.InitPower.set_params(ns=ns)
-        pars.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=7)
+        pars.set_matter_power(redshifts=[z], kmax=7)
 
         pars.NonLinear = model.NonLinear_none
         results = camb.get_results(pars)
-        kh, z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=7, npoints = 200)
+        kh, z, pk = results.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=7, npoints=200)
         mps_linear = interpolate.RectBivariateSpline(z, kh, pk)
         mps_evaluated[idx] = mps_linear(z, k)
-
-

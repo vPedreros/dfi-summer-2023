@@ -18,7 +18,7 @@
 %------------
 \begin{block}{Abstract}
 % The estimation of the expected performance of experiments, by prediction of constraints in cosmological parameters, has so far relied on various individual methodologies and numerical implementations, which were developed for different observational probes. \\ 
-The Euclid mission aims at understanding the accelerated expansion of the universe and what is the nature of the source responsible for this acceleration. Based on the work done on \textit{Euclid Preparation}, we aim to obtain estimates on the uncertainties of the cosmological parameter $\Omega_{m,0}$, $h$, $n_s$, $\sigma_8$, using Fisher Matrix forecasts, applied to Weak Lensing phenomenons.
+The Euclid mission aims at understanding the accelerated expansion of the universe and what is the nature of the source responsible for this acceleration. Based on the work done on \textit{Euclid Preparation}, we aim to obtain estimates on the uncertainties of the cosmological parameters $\Omega_{m,0}$, $h$, $n_s$, $\sigma_8$, using fisher matrix forecasts, applied to weak lensing phenomenons.
 
 \end{block}
 
@@ -29,9 +29,9 @@ The Euclid mission aims at understanding the accelerated expansion of the univer
 	Assuming the spatially flat $\Lambda$\textbf{CDM} model as a baseline of this work, we can describe our model by a minimal set of parameters:
 \begin{itemize}
     \item $\Omega_{m,0}$, the total matter energy densities at present time.
-    \item $h$, the dimensionless Hubble paramete
+    \item $h$, the dimensionless Hubble parameter.
     \item $n_s$, the spectral index of the primordial density power spectrum.
-    \item $\sigma_8$, the rms of present-day linearly evolved density fluctuations in spheres of $8h^{-1}$Mpc 
+    \item $\sigma_8$, the rms of present-day linearly evolved density fluctuations in spheres of $8h^{-1}$Mpc.
 \end{itemize}
 The Hubble parameter can be expressed as a function of redshift $H(z) = H_0 E(z)$, where is the Hubble parameter today and the proper distance function $E(z)$ can be expressed as:
 $$ E(z) = \sqrt{\Omega_{m,0}(1+z)^3 +\Omega_{\Lambda,0}+ \Omega_{K,0}(1+z)^2}$$
@@ -40,7 +40,7 @@ $$r(z) = \frac{c}{H_0}\int_{0}^{z} \frac{dz}{E(z)}$$
 
 which factors out the expansion of the universe today, providing a distance that does not change in time due to the expansion of space.
 
-Finally, the matter power spectrum (mps) describes the density contrast of the universe as a function of scale. It's depicted as: 
+Finally, the matter power spectrum (mps) describes the density contrast of the universe as a function of the wave number and the redshift. It's depicted as: 
 $$P_{\delta \delta}(k,z) = \left(\frac{\sigma _8}{\sigma _N}\right)^2\left[\frac{D(z)}{D(z=0)}\right]^2 T_m^2(k)k^{n_s}$$
 
 
@@ -93,7 +93,7 @@ and corresponds to the curvature of the logarithmic likelihood, describing how f
 The covariance matrix is depicted as: $$Cov[C_{ij}^{\epsilon\epsilon}(\ell), C_{kl}^{\epsilon\epsilon}(\ell')]=\frac{C_{ik}^{\epsilon\epsilon} C_{jl}^{\epsilon\epsilon}(\ell') + C_{il}^{\epsilon\epsilon}(\ell)C_{lk}^{\epsilon\epsilon}(\ell')}{(2l+1)f_{sky}\Delta \ell}\delta_{ll'}^K$$ where $f_{sky}$ is the fraction of surveyed sky and $\Delta \ell $ is the multipole bandwith.
 
 
- Finally it's possible to calculate the expected marginalized $1-\sigma$ error on the parameter $\theta_\alpha$ (left) and the unmarginalized expected errors (right)
+ Finally it's possible to calculate the expected marginalized $1-\sigma$ error on the parameter $\theta_\alpha$ (left) and the unmarginalised expected errors (right)
 $$\sigma_\alpha = \sqrt{(F^{-1})_{\alpha\alpha}}\,, \hspace{1cm} \sigma_\alpha =  \sqrt{1/F_{\alpha\alpha}}$$ accomplishing our main goal: the estimation of the uncertainties of the cosmological parameters.
 %$$\frac{\partial C_{ij}^{\gamma\gamma}(\ell)}{\partial \theta_\mu} = \int_{z_{min}}^{z_{max}}dz\frac{\partial K_{ij}^{\gamma\gamma}(z)}{\partial \theta_\mu} P_{\delta\delta}[k_\ell(z),z] +\int_{z_{min}}^{z_{max}}dzK_{ij}^{\gamma\gamma}(z)\frac{\partial P_{\delta\delta}[k_\ell(z),z]}{\partial \theta_\mu}$$ 
 %
@@ -107,23 +107,23 @@ $$\sigma_\alpha = \sqrt{(F^{-1})_{\alpha\alpha}}\,, \hspace{1cm} \sigma_\alpha =
 In order to obtain the cosmic shear power spectrum the mps is needed, which was obtained with CAMB \cite{p3} in two ways: by calling the CAMB interpolator directly (left) and by calling camb to obtain points of the mps and interpolate manually (right).
 \begin{figure}
     \centering
-    \includegraphics[width=0.48\textwidth]{fig_results/mps.png}
-    \includegraphics[width=0.48\textwidth]{fig_results/MPS.png}
+    \includegraphics[width=0.45\textwidth]{fig_results/mps.png}
+    \includegraphics[width=0.5\textwidth]{fig_results/MPS.png}
     \label{mps}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.48\textwidth]{fig_results/cosmicshear_ps.png}
-    \includegraphics[width=0.48\textwidth]{fig_results/cosmicshear_ps_connie.png}
+    \includegraphics[width=0.47\textwidth]{fig_results/CSPS.png}
+    \includegraphics[width=0.47\textwidth]{fig_results/CSPS.png}
     \label{mps}
 \end{figure}
 The following is a comparison of the errors on the marginalised and unmarginalised cosmological parameters.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.48\textwidth]{fig_results/sigmas.png}
-    \includegraphics[width=0.48\textwidth]{fig_results/SIGMAS.png}
+    \includegraphics[width=0.45\textwidth]{fig_results/sigmas.png}
+    \includegraphics[width=0.5\textwidth]{fig_results/SIGMAS.png}
     \label{mps}
 \end{figure}
 
@@ -133,10 +133,11 @@ The following is a comparison of the errors on the marginalised and unmarginalis
 % DISCUSSIÓ
 %------------
 \begin{block}{Discussion and Conclusions}
+There are some minor differences in the mps fits. It is easy to notice that the mps obtained by manual interpolation decays more abruptly than the interpolation made by CAMB. However, the behaviour of the cosmic shear power spectrum is really similar for all the bins, since integration over redshift was performed.\\
 
+When comparing to the errors obtained by the \textit{Euclid Collaboration}, we found that our errors were up to two orders of magnitude smaller. This could be explained by the fact that our covariance matrix had between 15 and 20 orders of magnitude more than expected. In the future, this will be studied carefully, along estimating other cosmological parameters (such as $\Omega_{b,o}$ $w_a$), consider the intrinsic alignment power spectrum, finding the appropiate shot noise and improving efficiency.
 
 \end{block}
-
 %-------------
 % REFERÈNCIES
 %-------------
@@ -157,7 +158,7 @@ The following is a comparison of the errors on the marginalised and unmarginalis
 
             \bibitem[3]{p3} [3] Lewis A, Challinor A,
             \newblock Code for Anisotropies in the Microwave Background (CAMB)
-            \newblock \emph{\url{https://camb.info}}
+	    \newblock \emph{\url{https://camb.info}}
         \end{thebibliography}
     }
 

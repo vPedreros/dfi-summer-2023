@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1674676996 "main.tex" "main.pdf" "main" 1674676998 2
+["pdflatex"] 1674686633 "main.tex" "main.pdf" "main" 1674686634 2
   "/home/vpedre/.miktex/texmfs/data/fonts/map/pdftex/pdftex.map" 1674673160 99460 308e2ecb530d78c34cfe899f88d6d5fd ""
   "/home/vpedre/.miktex/texmfs/data/fonts/pk/ljfour/jknappen/ec/dpi600/ecso1728.pk" 1674673163 57212 724ba53ff0af21e6e0ce89beb869fef0 ""
   "/home/vpedre/.miktex/texmfs/data/fonts/pk/ljfour/jknappen/ec/dpi616/ecso1200.pk" 1674673161 37644 14bcd0fa77b75a081cc8382a6c262d5e ""
@@ -230,17 +230,16 @@
   "/home/vpedre/.miktex/texmfs/install/tex/latex/xcolor/xcolor.sty" 1672625831 56148 51a9a8571c07b9921892ae11063ae853 ""
   "/home/vpedre/.miktex/texmfs/install/tex/latex/xkeyval/xkeyval.sty" 1672625562 4937 4ce600ce9bd4ec84d0250eb6892fcf4f ""
   "beamerthemeGeoURV.sty" 1674683688 5380 4805dcfe5875659d1aa3399823e3300e ""
+  "fig_results/CSPS.png" 1674685979 26923 455730c02b06ced444af981201d35aa4 ""
   "fig_results/MPS.png" 1674683688 89223 09f9f197beca43fed581e9654712f59d ""
   "fig_results/SIGMAS.png" 1674683688 32602 09510dda11b6aab79b3e0a8d5e293e34 ""
-  "fig_results/cosmicshear_ps.png" 1674683688 39952 66aca22dac9bab0b29e5904f64915330 ""
-  "fig_results/cosmicshear_ps_connie.png" 1674672693 31357 7beccc936b8f6d1f2d761a369d6a9097 ""
-  "fig_results/mps.png" 1674683688 169993 0c6a68ae35ee4dbbe2297e15a454520f ""
-  "fig_results/sigmas.png" 1674683688 61647 b572d7913ec8254eaec7be5c52aee60b ""
+  "fig_results/mps.png" 1674685816 80122 5f7c56fc7a555e2a53db55dbe289298b ""
+  "fig_results/sigmas.png" 1674685960 39285 fd1729bca6100e370a3c115c19da30d6 ""
   "figures/dfi_png.png" 1674683688 95763 c4e7c789141a456a4eef0bd21f72b0ef ""
-  "main.aux" 1674676997 1701 42bd6e43392fda0033a00e2c0984b6d7 "pdflatex"
-  "main.nav" 1674676997 459 6178c6f2f031b07114cdfe9fc0797420 "pdflatex"
-  "main.out" 1674676997 93 aea4b6a8ae45636c75679c2f0dfa4493 "pdflatex"
-  "main.tex" 1674676995 8272 c4f8cb0f5d8ea7c6e6af1e5fabf60747 ""
+  "main.aux" 1674686634 1701 42bd6e43392fda0033a00e2c0984b6d7 "pdflatex"
+  "main.nav" 1674686634 459 6178c6f2f031b07114cdfe9fc0797420 "pdflatex"
+  "main.out" 1674686634 93 aea4b6a8ae45636c75679c2f0dfa4493 "pdflatex"
+  "main.tex" 1674686632 9088 fe6768e5203080c153ec4cd3d7dd50a2 ""
   "metadata.tex" 1674683688 381 b1f22f2801796054202291c8e1d8dd67 ""
   "preamble.tex" 1674683688 1570 5db7555fc44cd7233fe0dc1f1a6c040f ""
   (generated)
